@@ -13,6 +13,7 @@ knitr::opts_chunk$set(collapse = TRUE, message = FALSE)
 ```{r load_libraries}
 library(tidyverse)
 library(readxl)
+library(ggplot2)
 ```
 
 
@@ -81,4 +82,86 @@ trans_ent %>%
   select(station_name, line) %>% 
   distinct()
 ```
+
+
+## Problem 2
+
+tidy up Mr. Trash Wheel sheet:
+```{r}
+mr_trash_wheel_df = 
+  read_excel("./data/202409 Trash Wheel Collection Data.xlsx", 
+             sheet = "Mr. Trash Wheel", , na = c("NA", "", "."),
+             col_names = TRUE) %>% 
+  janitor::clean_names() %>% 
+  filter(!is.na(dumpster)) %>% 
+  mutate(sports_balls = as.integer(round(sports_balls))) 
+```
+tidy up Professor Trash Wheel sheet:
+```{r}
+pr_trash_wheel_df = 
+  read_excel("./data/202409 Trash Wheel Collection Data.xlsx", 
+             sheet = "Professor Trash Wheel", , na = c("NA", "", "."),
+             col_names = TRUE) %>% 
+  janitor::clean_names() %>% 
+  filter(!is.na(dumpster)) 
+
+```
+tidy up Gwynnda Trash Wheel sheet:
+```{r}
+gw_trash_wheel_df = 
+  read_excel("./data/202409 Trash Wheel Collection Data.xlsx", 
+             sheet = "Gwynnda Trash Wheel", , na = c("NA", "", "."),
+             col_names = TRUE) %>% 
+  janitor::clean_names() %>% 
+  filter(!is.na(dumpster)) 
+
+```
+add an additional variable of sheet name:
+```{r}
+mr_trash_wheel_df = mutate(pr_trash_wheel_df, trash_wheel = "Mr. Trash Wheel")
+pr_trash_wheel_df = mutate(pr_trash_wheel_df, trash_wheel = "Professor Trash Wheel")
+gw_trash_wheel_df = mutate(pr_trash_wheel_df, trash_wheel = "Gwynnda Trash Wheel")
+```
+combine 3 tabels together:
+```{r}
+trash_wheel_df <- bind_rows(mr_trash_wheel_df, pr_trash_wheel_df, gw_trash_wheel_df)
+
+trash_wheel_df
+```
+
+### summarizing the dataset
+
+The number of observations in "Mr. Trash Wheel" is 263, in "Professor Trash Wheel" is 119, in "Gwynnda Trash Wheel" is 263, 789 observations in total:
+```{r}
+nrow(trash_wheel_df)
+nrow(mr_trash_wheel_df)
+nrow(pr_trash_wheel_df)
+nrow(gw_trash_wheel_df)
+```
+
+key variables:
+All 3 tables show weight, date, Homes Powered or not, and different kinds of trash, such as Plastic Bottles, Polystyrene,	Cigarette Butts,	Glass Bottles,	Plastic Bags,	Wrappers. And "Mr. Trash Wheel" includes extra kind	Sports Balls. 
+
+
+
+total weight of trash collected by Professor Trash Wheel is 246.74 tons:
+```{r}
+total_weight_pr = pr_trash_wheel_df %>% 
+  summarize(sum(weight_tons, na.rm = TRUE))
+
+total_weight_pr
+
+```
+total number of cigarette butts collected by Gwynnda in June of 2022 is 18120:
+```{r}
+total_butts = gw_trash_wheel_df %>%
+  filter(month == "June" & year == 2022) %>%
+  summarize(sum(cigarette_butts, na.rm = TRUE))
+
+total_butts
+```
+
+
+
+
 
