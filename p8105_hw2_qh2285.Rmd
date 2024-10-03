@@ -211,8 +211,11 @@ merge to create a single, final dataset, and organize this so that variables and
 ```{r}
 gbb_df = 
   left_join(bakers_df, bakes_df, by = c("baker_first_name" = "baker", 
-                                        "series" = "series")) 
-
+                                        "series" = "series")) %>%
+  left_join(results_df, by = c("series" = "series", "baker_first_name" = "baker", "episode" = "episode")) %>%
+  
+  select(-"baker") %>%
+  arrange("baker_first_name", "series", "episode")
 
 ```
 
@@ -222,17 +225,31 @@ write.csv(gbb_df, file = file.path("./data/gbb_datasets", "gbb_df.csv"), row.nam
 ```
 
 discuss the final dataset:
-
-
-
+The final dataset includes information about bakers' performance in various series and episodes, with their bakes signature, technical, show-stopper, and viewership. The empty values are not included in the final dataset might influence the analysis of the data.
 
 
 
 Create a reader-friendly table showing the star baker or winner of each episode in Seasons 5 through 10:
 ```{r}
-
+star_bakers_winners = gbb_df %>%
+  filter(series >= 5, series <= 10, result %in% c("STAR BAKER", "WINNER")) %>%
+  select(series, episode, baker, result) %>%
+  arrange(series, episode)
 
 ```
+Season 5: Richard
+
+Season 6: Nadiya.
+
+Season 7: Candice.
+
+Season 8: Steven.
+
+Season 9: Rahul.
+
+Season 10: Steph.
+
+
 
 Import, clean, tidy, and organize the viewership data in viewers.csv. Show the first 10 rows of this dataset:
 ```{r}
