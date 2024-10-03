@@ -110,7 +110,7 @@ tidy up Gwynnda Trash Wheel sheet:
 ```{r}
 gw_trash_wheel_df = 
   read_excel("./data/202409 Trash Wheel Collection Data.xlsx", 
-             sheet = "Gwynnda Trash Wheel", , na = c("NA", "", "."),
+             sheet = "Gwynnda Trash Wheel",  na = c("NA", "", "."),
              col_names = TRUE) %>% 
   janitor::clean_names() %>% 
   filter(!is.na(dumpster)) 
@@ -164,4 +164,98 @@ total_butts
 
 
 
+## problem 3
+
+import, clean, tidy, and otherwise wrangle each of all datasets:
+```{r}
+bakers_df = 
+  read_csv("./data/gbb_datasets/bakers.csv",  na = c("NA", "", "."),
+             col_names = TRUE) %>% 
+  janitor::clean_names() %>%
+  mutate(baker_first_name = word(baker_name, 1)) 
+
+bakes_df = 
+  read_csv("./data/gbb_datasets/bakes.csv",  na = c("NA", "", "."),
+             col_names = TRUE) %>% 
+  janitor::clean_names() 
+
+results_df = 
+  read_csv("./data/gbb_datasets/results.csv",  na = c("NA", "", "."),
+             col_names = TRUE) %>% 
+  janitor::clean_names() 
+
+viewers_df =
+  read_csv("./data/gbb_datasets/viewers.csv",  na = c("NA", "", "."),
+             col_names = TRUE) %>% 
+  janitor::clean_names() %>%
+  pivot_longer(cols = starts_with("series_"), 
+               names_to = "series", 
+               names_prefix = "series_", 
+               values_to = "viewers") %>%
+  mutate(series = as.integer(series))
+```
+
+check for completeness and correctness across datasets (e.g. by viewing individual datasets and using anti_join): 
+```{r}
+anti_join(bakes_df, bakers_df, by = c("baker" = "baker_first_name"))
+```
+
+change all values include "Jo"
+```{r}
+bakes_df = mutate(bakes_df,
+                  baker = ifelse(baker == "\"Jo\"", "Jo", baker))
+
+```
+
+merge to create a single, final dataset, and organize this so that variables and observations are in meaningful orders:
+```{r}
+gbb_df = 
+  left_join(bakers_df, bakes_df, by = c("baker_first_name" = "baker", 
+                                        "series" = "series")) %>%
+  left_join(results_df, by = c("series", "baker_first_name" = "baker", "episode")) %>%
+  
+  select(-"baker") %>%
+  arrange("baker_first_name", "series", "episode")
+
+```
+
+Export the result as a CSV in the directory containing the original datasets:
+```{r}
+write.csv(gbb_df, file = file.path("./data/gbb_datasets", "gbb_df.csv"), row.names = FALSE)
+```
+
+discuss the final dataset:
+
+
+
+
+
+
+Create a reader-friendly table showing the star baker or winner of each episode in Seasons 5 through 10:
+```{r}
+star_bakers_winners = gbb_df %>%
+  filter(series >= 5, series <= 10, result %in% c("STAR BAKER", "WINNER")) %>%
+  select(series, episode, baker, result) %>%
+  arrange(series, episode)
+
+```
+
+Import, clean, tidy, and organize the viewership data in viewers.csv. Show the first 10 rows of this dataset:
+```{r}
+viewers_df %>% arrange("series", "episode") %>%  
+  head(10) %>%
+  print()
+```
+
+average viewership in Season 1 is 2.77000. In Season 5 is 10.03930:
+```{r}
+avg_viewership_by_season = 
+  viewers_df %>%
+  group_by(series) %>%
+  summarise(
+    average_viewers = mean(viewers, na.rm = TRUE)
+  )
+
+avg_viewership_by_season
+```
 
